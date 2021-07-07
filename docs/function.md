@@ -139,7 +139,7 @@ fetch('http://example.com')
 上面代码中，如果函数`fetch`的第二个参数是一个对象，就可以为它的三个属性设置默认值。这种写法不能省略第二个参数，如果结合函数参数的默认值，就可以省略第二个参数。这时，就出现了双重默认值。
 
 ```javascript
-function fetch(url, { method = 'GET' } = {}) {
+function fetch(url, { body = '', method = 'GET', headers = {} } = {}) {
   console.log(method);
 }
 
@@ -149,7 +149,7 @@ fetch('http://example.com')
 
 上面代码中，函数`fetch`没有第二个参数时，函数参数的默认值就会生效，然后才是解构赋值的默认值生效，变量`method`才会取到默认值`GET`。
 
-再请问下面两种写法有什么差别？
+作为练习，请问下面两种写法有什么差别？
 
 ```javascript
 // 写法一
@@ -197,7 +197,7 @@ function f(x = 1, y) {
 }
 
 f() // [1, undefined]
-f(2) // [2, undefined])
+f(2) // [2, undefined]
 f(, 1) // 报错
 f(undefined, 1) // [1, 1]
 
@@ -237,7 +237,7 @@ foo(undefined, null)
 (function (a, b, c = 5) {}).length // 2
 ```
 
-上面代码中，`length`属性的返回值，等于函数的参数个数减去指定了默认值的参数个数。比如，上面最后一个函数，定义了3个参数，其中有一个参数`c`指定了默认值，因此`length`属性等于`3`减去`1`，最后得到`2`。
+上面代码中，`length`属性的返回值，等于函数的参数个数减去指定了默认值的参数个数。比如，上面最后一个函数，定义了 3 个参数，其中有一个参数`c`指定了默认值，因此`length`属性等于`3`减去`1`，最后得到`2`。
 
 这是因为`length`属性的含义是，该函数预期传入的参数个数。某个参数指定默认值以后，预期传入的参数个数就不包括这个参数了。同理，后文的 rest 参数也不会计入`length`属性。
 
@@ -577,7 +577,7 @@ bar.name // "baz"
 (new Function).name // "anonymous"
 ```
 
-`bind`返回的函数，`name`属性值会加上`bound `前缀。
+`bind`返回的函数，`name`属性值会加上`bound`前缀。
 
 ```javascript
 function foo() {};
@@ -594,12 +594,9 @@ ES6 允许使用“箭头”（`=>`）定义函数。
 
 ```javascript
 var f = v => v;
-```
 
-上面的箭头函数等同于：
-
-```javascript
-var f = function(v) {
+// 等同于
+var f = function (v) {
   return v;
 };
 ```
@@ -634,6 +631,15 @@ let getTempItem = id => { id: id, name: "Temp" };
 let getTempItem = id => ({ id: id, name: "Temp" });
 ```
 
+下面是一种特殊情况，虽然可以运行，但会得到错误的结果。
+
+```javascript
+let foo = () => { a: 1 };
+foo() // undefined
+```
+
+上面代码中，原始意图是返回一个对象`{ a: 1 }`，但是由于引擎认为大括号是代码块，所以执行了一行语句`a: 1`。这时，`a`可以被解释为语句的标签，因此实际执行的语句是`1;`，然后函数就结束了，没有返回值。
+
 如果箭头函数只有一行语句，且不需要返回值，可以采用下面的写法，就不用写大括号了。
 
 ```javascript
@@ -654,7 +660,7 @@ function full(person) {
 箭头函数使得表达更加简洁。
 
 ```javascript
-const isEven = n => n % 2 == 0;
+const isEven = n => n % 2 === 0;
 const square = n => n * n;
 ```
 
@@ -663,7 +669,7 @@ const square = n => n * n;
 箭头函数的一个用处是简化回调函数。
 
 ```javascript
-// 正常函数写法
+// 普通函数写法
 [1,2,3].map(function (x) {
   return x * x;
 });
@@ -675,7 +681,7 @@ const square = n => n * n;
 另一个例子是
 
 ```javascript
-// 正常函数写法
+// 普通函数写法
 var result = values.sort(function (a, b) {
   return a - b;
 });
@@ -702,15 +708,15 @@ headAndTail(1, 2, 3, 4, 5)
 
 箭头函数有几个使用注意点。
 
-（1）函数体内的`this`对象，就是定义时所在的对象，而不是使用时所在的对象。
+（1）箭头函数没有自己的`this`对象（详见下文）。
 
-（2）不可以当作构造函数，也就是说，不可以使用`new`命令，否则会抛出一个错误。
+（2）不可以当作构造函数，也就是说，不可以对箭头函数使用`new`命令，否则会抛出一个错误。
 
 （3）不可以使用`arguments`对象，该对象在函数体内不存在。如果要用，可以用 rest 参数代替。
 
 （4）不可以使用`yield`命令，因此箭头函数不能用作 Generator 函数。
 
-上面四点中，第一点尤其值得注意。`this`对象的指向是可变的，但是在箭头函数中，它是固定的。
+上面四点中，最重要的是第一点。对于普通函数来说，内部的`this`指向函数运行时所在的对象，但是这一点对箭头函数不成立。它没有自己的`this`对象，内部的`this`就是定义时上层作用域中的`this`。也就是说，箭头函数内部的`this`指向是固定的，相比之下，普通函数的`this`指向是可变的。
 
 ```javascript
 function foo() {
@@ -725,9 +731,9 @@ foo.call({ id: 42 });
 // id: 42
 ```
 
-上面代码中，`setTimeout`的参数是一个箭头函数，这个箭头函数的定义生效是在`foo`函数生成时，而它的真正执行要等到100毫秒后。如果是普通函数，执行时`this`应该指向全局对象`window`，这时应该输出`21`。但是，箭头函数导致`this`总是指向函数定义生效时所在的对象（本例是`{id: 42}`），所以输出的是`42`。
+上面代码中，`setTimeout()`的参数是一个箭头函数，这个箭头函数的定义生效是在`foo`函数生成时，而它的真正执行要等到 100 毫秒后。如果是普通函数，执行时`this`应该指向全局对象`window`，这时应该输出`21`。但是，箭头函数导致`this`总是指向函数定义生效时所在的对象（本例是`{id: 42}`），所以打印出来的是`42`。
 
-箭头函数可以让`setTimeout`里面的`this`，绑定定义时所在的作用域，而不是指向运行时所在的作用域。下面是另一个例子。
+下面例子是回调函数分别为箭头函数和普通函数，对比它们内部的`this`指向。
 
 ```javascript
 function Timer() {
@@ -749,9 +755,9 @@ setTimeout(() => console.log('s2: ', timer.s2), 3100);
 // s2: 0
 ```
 
-上面代码中，`Timer`函数内部设置了两个定时器，分别使用了箭头函数和普通函数。前者的`this`绑定定义时所在的作用域（即`Timer`函数），后者的`this`指向运行时所在的作用域（即全局对象）。所以，3100毫秒之后，`timer.s1`被更新了3次，而`timer.s2`一次都没更新。
+上面代码中，`Timer`函数内部设置了两个定时器，分别使用了箭头函数和普通函数。前者的`this`绑定定义时所在的作用域（即`Timer`函数），后者的`this`指向运行时所在的作用域（即全局对象）。所以，3100 毫秒之后，`timer.s1`被更新了 3 次，而`timer.s2`一次都没更新。
 
-箭头函数可以让`this`指向固定化，这种特性很有利于封装回调函数。下面是一个例子，DOM 事件的回调函数封装在一个对象里面。
+箭头函数实际上可以让`this`指向固定化，绑定`this`使得它不再可变，这种特性很有利于封装回调函数。下面是一个例子，DOM 事件的回调函数封装在一个对象里面。
 
 ```javascript
 var handler = {
@@ -768,11 +774,11 @@ var handler = {
 };
 ```
 
-上面代码的`init`方法中，使用了箭头函数，这导致这个箭头函数里面的`this`，总是指向`handler`对象。否则，回调函数运行时，`this.doSomething`这一行会报错，因为此时`this`指向`document`对象。
+上面代码的`init()`方法中，使用了箭头函数，这导致这个箭头函数里面的`this`，总是指向`handler`对象。如果回调函数是普通函数，那么运行`this.doSomething()`这一行会报错，因为此时`this`指向`document`对象。
 
-`this`指向的固定化，并不是因为箭头函数内部有绑定`this`的机制，实际原因是箭头函数根本没有自己的`this`，导致内部的`this`就是外层代码块的`this`。正是因为它没有`this`，所以也就不能用作构造函数。
+总之，箭头函数根本没有自己的`this`，导致内部的`this`就是外层代码块的`this`。正是因为它没有`this`，所以也就不能用作构造函数。
 
-所以，箭头函数转成 ES5 的代码如下。
+下面是 Babel 转箭头函数产生的 ES5 代码，就能清楚地说明`this`的指向。
 
 ```javascript
 // ES6
@@ -792,9 +798,9 @@ function foo() {
 }
 ```
 
-上面代码中，转换后的ES5版本清楚地说明了，箭头函数里面根本没有自己的`this`，而是引用外层的`this`。
+上面代码中，转换后的 ES5 版本清楚地说明了，箭头函数里面根本没有自己的`this`，而是引用外层的`this`。
 
-请问下面的代码之中有几个`this`？
+请问下面的代码之中，`this`的指向有几个？
 
 ```javascript
 function foo() {
@@ -814,7 +820,7 @@ var t2 = f().call({id: 3})(); // id: 1
 var t3 = f()().call({id: 4}); // id: 1
 ```
 
-上面代码之中，只有一个`this`，就是函数`foo`的`this`，所以`t1`、`t2`、`t3`都输出同样的结果。因为所有的内层函数都是箭头函数，都没有自己的`this`，它们的`this`其实都是最外层`foo`函数的`this`。
+答案是`this`的指向只有一个，就是函数`foo`的`this`，这是因为所有的内层函数都是箭头函数，都没有自己的`this`，它们的`this`其实都是最外层`foo`函数的`this`。所以不管怎么嵌套，`t1`、`t2`、`t3`都输出同样的结果。如果这个例子的所有内层函数都写成普通函数，那么每个函数的`this`都指向运行时所在的不同对象。
 
 除了`this`，以下三个变量在箭头函数之中也是不存在的，指向外层函数的对应变量：`arguments`、`super`、`new.target`。
 
@@ -845,6 +851,65 @@ foo(2, 4, 6, 8)
 上面代码中，箭头函数没有自己的`this`，所以`bind`方法无效，内部的`this`指向外部的`this`。
 
 长期以来，JavaScript 语言的`this`对象一直是一个令人头痛的问题，在对象方法中使用`this`，必须非常小心。箭头函数”绑定”`this`，很大程度上解决了这个困扰。
+
+### 不适用场合
+
+由于箭头函数使得`this`从“动态”变成“静态”，下面两个场合不应该使用箭头函数。
+
+第一个场合是定义对象的方法，且该方法内部包括`this`。
+
+```javascript
+const cat = {
+  lives: 9,
+  jumps: () => {
+    this.lives--;
+  }
+}
+```
+
+上面代码中，`cat.jumps()`方法是一个箭头函数，这是错误的。调用`cat.jumps()`时，如果是普通函数，该方法内部的`this`指向`cat`；如果写成上面那样的箭头函数，使得`this`指向全局对象，因此不会得到预期结果。这是因为对象不构成单独的作用域，导致`jumps`箭头函数定义时的作用域就是全局作用域。
+
+再看一个例子。
+
+```javascript
+globalThis.s = 21;
+
+const obj = {
+  s: 42,
+  m: () => console.log(this.s)
+};
+
+obj.m() // 21
+```
+
+上面例子中，`obj.m()`使用箭头函数定义。JavaScript 引擎的处理方法是，先在全局空间生成这个箭头函数，然后赋值给`obj.m`，这导致箭头函数内部的`this`指向全局对象，所以`obj.m()`输出的是全局空间的`21`，而不是对象内部的`42`。上面的代码实际上等同于下面的代码。
+
+```javascript
+globalThis.s = 21;
+globalThis.m = () => console.log(this.s);
+
+const obj = {
+  s: 42,
+  m: globalThis.m
+};
+
+obj.m() // 21
+```
+
+由于上面这个原因，对象的属性建议使用传统的写法定义，不要用箭头函数定义。
+
+第二个场合是需要动态`this`的时候，也不应使用箭头函数。
+
+```javascript
+var button = document.getElementById('press');
+button.addEventListener('click', () => {
+  this.classList.toggle('on');
+});
+```
+
+上面代码运行时，点击按钮会报错，因为`button`的监听函数是一个箭头函数，导致里面的`this`就是全局对象。如果改成普通函数，`this`就会动态指向被点击的按钮对象。
+
+另外，如果函数体很复杂，有许多行，或者函数内部有大量的读写操作，不单纯是为了计算值，这时也不应该使用箭头函数，而是要使用普通函数，这样可以提高代码可读性。
 
 ### 嵌套的箭头函数
 
@@ -898,7 +963,7 @@ mult2(plus1(5))
 // 12
 ```
 
-箭头函数还有一个功能，就是可以很方便地改写λ演算。
+箭头函数还有一个功能，就是可以很方便地改写 λ 演算。
 
 ```javascript
 // λ演算的写法
@@ -909,59 +974,7 @@ var fix = f => (x => f(v => x(x)(v)))
                (x => f(v => x(x)(v)));
 ```
 
-上面两种写法，几乎是一一对应的。由于λ演算对于计算机科学非常重要，这使得我们可以用ES6作为替代工具，探索计算机科学。
-
-## 绑定 this
-
-箭头函数可以绑定`this`对象，大大减少了显式绑定`this`对象的写法（`call`、`apply`、`bind`）。但是，箭头函数并不适用于所有场合，所以ES7提出了“函数绑定”（function bind）运算符，用来取代`call`、`apply`、`bind`调用。虽然该语法还是ES7的一个[提案](https://github.com/zenparsing/es-function-bind)，但是Babel转码器已经支持。
-
-函数绑定运算符是并排的两个冒号（::），双冒号左边是一个对象，右边是一个函数。该运算符会自动将左边的对象，作为上下文环境（即this对象），绑定到右边的函数上面。
-
-```javascript
-foo::bar;
-// 等同于
-bar.bind(foo);
-
-foo::bar(...arguments);
-// 等同于
-bar.apply(foo, arguments);
-
-const hasOwnProperty = Object.prototype.hasOwnProperty;
-function hasOwn(obj, key) {
-  return obj::hasOwnProperty(key);
-}
-```
-
-如果双冒号左边为空，右边是一个对象的方法，则等于将该方法绑定在该对象上面。
-
-```javascript
-var method = obj::obj.foo;
-// 等同于
-var method = ::obj.foo;
-
-let log = ::console.log;
-// 等同于
-var log = console.log.bind(console);
-```
-
-由于双冒号运算符返回的还是原对象，因此可以采用链式写法。
-
-```javascript
-// 例一
-import { map, takeWhile, forEach } from "iterlib";
-
-getPlayers()
-::map(x => x.character())
-::takeWhile(x => x.strength > 100)
-::forEach(x => console.log(x));
-
-// 例二
-let { find, html } = jake;
-
-document.querySelectorAll("div.myClass")
-::find("p")
-::html("hahaha");
-```
+上面两种写法，几乎是一一对应的。由于 λ 演算对于计算机科学非常重要，这使得我们可以用 ES6 作为替代工具，探索计算机科学。
 
 ## 尾调用优化
 
@@ -1063,6 +1076,8 @@ function addOne(a){
 
 上面的函数不会进行尾调用优化，因为内层函数`inner`用到了外层函数`addOne`的内部变量`one`。
 
+注意，目前只有 Safari 浏览器支持尾调用优化，Chrome 和 Firefox 都不支持。
+
 ### 尾递归
 
 函数调用自身，称为递归。如果尾调用自身，就称为尾递归。
@@ -1103,8 +1118,8 @@ function Fibonacci (n) {
 }
 
 Fibonacci(10) // 89
-Fibonacci(100) // 堆栈溢出
-Fibonacci(500) // 堆栈溢出
+Fibonacci(100) // 超时
+Fibonacci(500) // 超时
 ```
 
 尾递归优化过的 Fibonacci 数列实现如下。
@@ -1121,7 +1136,7 @@ Fibonacci2(1000) // 7.0330367711422765e+208
 Fibonacci2(10000) // Infinity
 ```
 
-由此可见，“尾调用优化”对递归操作意义重大，所以一些函数式编程语言将其写入了语言规格。ES6 是如此，第一次明确规定，所有 ECMAScript 的实现，都必须部署“尾调用优化”。这就是说，ES6 中只要使用尾递归，就不会发生栈溢出，相对节省内存。
+由此可见，“尾调用优化”对递归操作意义重大，所以一些函数式编程语言将其写入了语言规格。ES6 亦是如此，第一次明确规定，所有 ECMAScript 的实现，都必须部署“尾调用优化”。这就是说，ES6 中只要使用尾递归，就不会发生栈溢出（或者层层递归造成的超时），相对节省内存。
 
 ### 递归函数的改写
 
@@ -1178,7 +1193,7 @@ factorial(5) // 120
 
 上面代码中，参数`total`有默认值`1`，所以调用时不用提供这个值。
 
-总结一下，递归本质上是一种循环操作。纯粹的函数式编程语言没有循环操作命令，所有的循环都用递归实现，这就是为什么尾递归对这些语言极其重要。对于其他支持“尾调用优化”的语言（比如Lua，ES6），只需要知道循环可以用递归代替，而一旦使用递归，就最好使用尾递归。
+总结一下，递归本质上是一种循环操作。纯粹的函数式编程语言没有循环操作命令，所有的循环都用递归实现，这就是为什么尾递归对这些语言极其重要。对于其他支持“尾调用优化”的语言（比如 Lua，ES6），只需要知道循环可以用递归代替，而一旦使用递归，就最好使用尾递归。
 
 ### 严格模式
 
@@ -1221,7 +1236,7 @@ sum(1, 100000)
 // Uncaught RangeError: Maximum call stack size exceeded(…)
 ```
 
-上面代码中，`sum`是一个递归函数，参数`x`是需要累加的值，参数`y`控制递归次数。一旦指定`sum`递归100000次，就会报错，提示超出调用栈的最大次数。
+上面代码中，`sum`是一个递归函数，参数`x`是需要累加的值，参数`y`控制递归次数。一旦指定`sum`递归 100000 次，就会报错，提示超出调用栈的最大次数。
 
 蹦床函数（trampoline）可以将递归执行转为循环执行。
 
@@ -1329,40 +1344,51 @@ clownsEverywhere(
 
 这样的规定也使得，函数参数与数组和对象的尾逗号规则，保持一致了。
 
-## catch 语句的参数
+## Function.prototype.toString()
 
-目前，有一个[提案](https://github.com/tc39/proposal-optional-catch-binding)，允许`try...catch`结构中的`catch`语句调用时不带有参数。这个提案跟参数有关，也放在这一章介绍。
+[ES2019](https://github.com/tc39/Function-prototype-toString-revision) 对函数实例的`toString()`方法做出了修改。
 
-传统的写法是`catch`语句必须带有参数，用来接收`try`代码块抛出的错误。
+`toString()`方法返回函数代码本身，以前会省略注释和空格。
+
+```javascript
+function /* foo comment */ foo () {}
+
+foo.toString()
+// function foo() {}
+```
+
+上面代码中，函数`foo`的原始代码包含注释，函数名`foo`和圆括号之间有空格，但是`toString()`方法都把它们省略了。
+
+修改后的`toString()`方法，明确要求返回一模一样的原始代码。
+
+```javascript
+function /* foo comment */ foo () {}
+
+foo.toString()
+// "function /* foo comment */ foo () {}"
+```
+
+## catch 命令的参数省略
+
+JavaScript 语言的`try...catch`结构，以前明确要求`catch`命令后面必须跟参数，接受`try`代码块抛出的错误对象。
 
 ```javascript
 try {
-  //  ···
-} catch (error) {
-  //  ···
+  // ...
+} catch (err) {
+  // 处理错误
 }
 ```
 
-新的写法允许省略`catch`后面的参数，而不报错。
+上面代码中，`catch`命令后面带有参数`err`。
+
+很多时候，`catch`代码块可能用不到这个参数。但是，为了保证语法正确，还是必须写。[ES2019](https://github.com/tc39/proposal-optional-catch-binding) 做出了改变，允许`catch`语句省略参数。
 
 ```javascript
 try {
-  //  ···
+  // ...
 } catch {
-  //  ···
+  // ...
 }
 ```
-
-新写法只在不需要错误实例的情况下有用，因此不及传统写法的用途广。
-
-```javascript
-let jsonData;
-try {
-  jsonData = JSON.parse(str);
-} catch {
-  jsonData = DEFAULT_DATA;
-}
-```
-
-上面代码中，`JSON.parse`报错只有一种可能：解析失败。因此，可以不需要抛出的错误实例。
 
